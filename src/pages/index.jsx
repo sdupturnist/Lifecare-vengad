@@ -155,219 +155,179 @@ export default function Home({ homePageData, doctorComponentData, allPostsData }
   );
 }
 
-export async function getServerSideProps(context) {
-
+export async function getStaticProps() {
   try {
-
-    //HOME PAGE DATA
-    const homeData = await fetch(
-      wordpressGraphQlApiUrl, {
+    // HOME PAGE DATA
+    const homeDataResponse = await fetch(wordpressGraphQlApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        query: ` query Posts {
-                  pages(where: {title: "home"}) {
-                    
-                    nodes{
-                      seo {
-                        canonical
-                        metaDesc
-                        metaKeywords
-                        title
-                        opengraphDescription
-                        opengraphSiteName
-                        opengraphUrl
-                        opengraphImage {
-                          altText
-                          link
-                          sourceUrl
-                        }
-                        opengraphType
-                        opengraphTitle
-                        opengraphModifiedTime
-                        twitterDescription
-                        twitterTitle
-                        twitterImage {
-                          sourceUrl
-                        }
-                      }
-                    }
-
-
-                    edges {
-                    
-                      
-                      node {  
-                     
-                        id
-                        homeAcf {
-                          aboutDescription
-                          aboutBackground {
-                            node {
-                              altText
-                              sourceUrl
-                            }
-                          }
-                          aboutHeading
-                          bannerDescription
-                          bannerImage {
-                            node {
-                              altText
-                              sourceUrl
-                            }
-                          }
-                          bannerTitle
-                          button
-                          buttonLabel
-                          ctaButton
-                          ctaDescription
-                          ctaHeading
-                          doctorsDescription
-                          doctorsHeading
-                          fieldGroupName
-                          missionAndVisionBanner {
-                            node {
-                              altText
-                              sourceUrl
-                            }
-                          }
-                          missionDescription
-                          missionHeading
-                          specialititiesDescription
-                          specialititiesHeading
-                          specialtiesImage {
-                            node {
-                              altText
-                              sourceUrl
-                            }
-                          }
-                          visionDescription
-                          visionHeading
-                        }
-                      }
+        query: `query Posts {
+          pages(where: {title: "home"}) {
+            nodes {
+              seo {
+                canonical
+                metaDesc
+                metaKeywords
+                title
+                opengraphDescription
+                opengraphSiteName
+                opengraphUrl
+                opengraphImage {
+                  altText
+                  link
+                  sourceUrl
+                }
+                opengraphType
+                opengraphTitle
+                opengraphModifiedTime
+                twitterDescription
+                twitterTitle
+                twitterImage {
+                  sourceUrl
+                }
+              }
+            }
+            edges {
+              node {
+                id
+                homeAcf {
+                  aboutDescription
+                  aboutBackground {
+                    node {
+                      altText
+                      sourceUrl
                     }
                   }
-            }
-          `,
-      }),
-      next: { revalidate: 10 },
-    },
-      {
-        cache: 'force-cache',
-        cache: 'no-store'
-      }
-    );
-
-    const homePageData = await homeData.json();
-
-
-
-   //DOCTORS DATA
-   const doctorData = await fetch(
-    wordpressGraphQlApiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      query: ` query Posts {
-        doctors {
-          nodes {
-            title
-            categories {
-              edges {
-              node {
-                termTaxonomyId
-                description
-              }
-            }
-            }
-            featuredImage {
-              node {
-                mediaDetails {
-                  height
-                  width
+                  aboutHeading
+                  bannerDescription
+                  bannerImage {
+                    node {
+                      altText
+                      sourceUrl
+                    }
+                  }
+                  bannerTitle
+                  button
+                  buttonLabel
+                  ctaButton
+                  ctaDescription
+                  ctaHeading
+                  doctorsDescription
+                  doctorsHeading
+                  fieldGroupName
+                  missionAndVisionBanner {
+                    node {
+                      altText
+                      sourceUrl
+                    }
+                  }
+                  missionDescription
+                  missionHeading
+                  specialititiesDescription
+                  specialititiesHeading
+                  specialtiesImage {
+                    node {
+                      altText
+                      sourceUrl
+                    }
+                  }
+                  visionDescription
+                  visionHeading
                 }
-                altText
-                sourceUrl
               }
-            }
-            doctorACF {
-              time
-              id
             }
           }
-        }
-  }
-        `,
-    }),
-    next: { revalidate: 10 },
-  },
-    {
-      cache: 'force-cache',
-      cache: 'no-store'
-    }
-  );
+        }`,
+      }),
+    });
 
-  const doctorComponentData = await doctorData.json();
+    const homePageData = await homeDataResponse.json();
 
-
-
-
-     //ALL POSTS DATA
-     const postsData = await fetch(
-      wordpressGraphQlApiUrl, {
+    // DOCTORS DATA
+    const doctorDataResponse = await fetch(wordpressGraphQlApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        query: `  query Posts {
-          posts {
-            nodes{
-               title
-               link
-               slug
-               modified
-               author{
-                 node{
-                   name
-                   databaseId
-                 }
-               }
-             }
-         }
-        }
-          `,
+        query: `query Posts {
+          doctors {
+            nodes {
+              title
+              categories {
+                edges {
+                  node {
+                    termTaxonomyId
+                    description
+                  }
+                }
+              }
+              featuredImage {
+                node {
+                  mediaDetails {
+                    height
+                    width
+                  }
+                  altText
+                  sourceUrl
+                }
+              }
+              doctorACF {
+                time
+                id
+              }
+            }
+          }
+        }`,
       }),
-      next: { revalidate: 10 },
-    },
-      {
-        cache: 'force-cache',
-        cache: 'no-store'
-      }
-    );
-  
-    const allPostsData = await postsData.json();
+    });
 
+    const doctorComponentData = await doctorDataResponse.json();
+
+    // ALL POSTS DATA
+    const postsDataResponse = await fetch(wordpressGraphQlApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: `query Posts {
+          posts {
+            nodes {
+              title
+              link
+              slug
+              modified
+              author {
+                node {
+                  name
+                  databaseId
+                }
+              }
+            }
+          }
+        }`,
+      }),
+    });
+
+    const allPostsData = await postsDataResponse.json();
 
     return {
       props: {
         homePageData,
         doctorComponentData,
-        allPostsData
+        allPostsData,
       },
+      revalidate: 10, // Revalidate every 10 seconds
     };
   } catch (error) {
     console.error('Error fetching data:', error);
 
     return {
-      redirect: {
-        destination: '/error',
-        permanent: false,
-      },
+      notFound: true, // Display a 404 page if an error occurs
     };
   }
 }

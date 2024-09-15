@@ -67,19 +67,16 @@ export default function Appoinment({ contactPageData, contactComponentData }) {
     );
   }
   
-  export async function getServerSideProps(context) {
-    // Fetch data from an external API, database, or any other source
+  export async function getStaticProps() {
     try {
-  
-      //HOME PAGE DATA
-      const pageData = await fetch(
-        wordpressGraphQlApiUrl, {
+      // HOME PAGE DATA
+      const pageDataResponse = await fetch(wordpressGraphQlApiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: `  query Posts {
+          query: `query Posts {
             pages(where: {id: 1110}) {
               nodes {
                 title
@@ -90,7 +87,7 @@ export default function Appoinment({ contactPageData, contactComponentData }) {
                   }
                 }
                 seo {
-                canonical
+                  canonical
                   metaDesc
                   metaKeywords
                   title
@@ -113,78 +110,58 @@ export default function Appoinment({ contactPageData, contactComponentData }) {
                 }
               }
             }
-      }
-            `,
+          }`,
         }),
-        next: { revalidate: 10 },
-      },
-        {
-          cache: 'force-cache',
-          cache: 'no-store'
-        }
-      );
+      });
   
-      const contactPageData = await pageData.json();
+      const contactPageData = await pageDataResponse.json();
   
-
-     //DOCTORS DATA
-     const contactData = await fetch(
-      wordpressGraphQlApiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: ` query Posts {
+      // DOCTORS DATA
+      const contactDataResponse = await fetch(wordpressGraphQlApiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `query Posts {
             allContactInfos {
-                edges {
-                  node {
-                    content
-                    contactInfoAcf {
-                        address
-                        email
-                        facebook
-                        instagram
-                        phone
-                        apponmentPageTopBoxDescription
-                        contactFormDescription
-                        contactFormHeading
-                    }
+              edges {
+                node {
+                  content
+                  contactInfoAcf {
+                    address
+                    email
+                    facebook
+                    instagram
+                    phone
+                    appointmentPageTopBoxDescription
+                    contactFormDescription
+                    contactFormHeading
                   }
                 }
               }
-    }
-          `,
-      }),
-      next: { revalidate: 10 },
-    },
-      {
-        cache: 'force-cache',
-        cache: 'no-store'
-      }
-    );
+            }
+          }`,
+        }),
+      });
   
-    const contactComponentData = await contactData.json();
-    
-  // -------------------------------------------------------------
+      const contactComponentData = await contactDataResponse.json();
   
       // Pass fetched data as props to the page component
       return {
         props: {
-            contactPageData,
-             contactComponentData 
+          contactPageData,
+          contactComponentData,
         },
+        revalidate: 10, // Revalidate the static page every 10 seconds
       };
     } catch (error) {
       console.error('Error fetching data:', error);
   
-      // If an error occurs during data fetching, you can handle it here
-      // For example, you might want to redirect to an error page
+      // Handle errors by returning fallback or empty data
       return {
-        redirect: {
-          destination: '/error',
-          permanent: false,
-        },
+        notFound: true, // Show a 404 page if there is an error
       };
     }
   }
+  

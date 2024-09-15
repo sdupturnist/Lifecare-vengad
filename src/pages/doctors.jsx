@@ -96,41 +96,35 @@ export default function DoctorsPage({ doctorsPageData, doctorComponentData }) {
     );
   }
   
-  export async function getServerSideProps(context) {
-    // Fetch data from an external API, database, or any other source
+  export async function getStaticProps() {
     try {
-  
-      //HOME PAGE DATA
-      const pageData = await fetch(
-        wordpressGraphQlApiUrl, {
+      // HOME PAGE DATA
+      const pageDataResponse = await fetch(wordpressGraphQlApiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: ` query Posts {
+          query: `query Posts {
             pages(where: {id: 44}) {
               nodes {
                 title
-                
                 featuredImage {
                   node {
                     altText
                     sourceUrl
                   }
-                  
                 }
-                  pageACF {
-                    about
-                    sectionDescription
-                    sectionHeading
-                    subHeading
+                pageACF {
+                  about
+                  sectionDescription
+                  sectionHeading
+                  subHeading
                   ctaBannerHeading
                   ctaBannerDescription
                   ctaButtonLabel
                   ctaButtonUrl
-                     
-                    }
+                }
                 seo {
                   canonical
                   metaDesc
@@ -155,32 +149,22 @@ export default function DoctorsPage({ doctorsPageData, doctorComponentData }) {
                 }
               }
             }
-          }
-            `,
+          }`,
         }),
-        next: { revalidate: 10 },
-      },
-        {
-          cache: 'force-cache',
-          cache: 'no-store'
-        }
-      );
+      });
   
-      const doctorsPageData = await pageData.json();
+      const doctorsPageData = await pageDataResponse.json();
   
-
-     //DOCTORS DATA
-     const doctorData = await fetch(
-      wordpressGraphQlApiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: ` query Posts {
+      // DOCTORS DATA
+      const doctorDataResponse = await fetch(wordpressGraphQlApiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: `query Posts {
             doctors {
-
-              nodes{
+              nodes {
                 seo {
                   canonical
                   metaDesc
@@ -203,18 +187,16 @@ export default function DoctorsPage({ doctorsPageData, doctorComponentData }) {
                     sourceUrl
                   }
                 }
-            
                 title
                 content
-               
-               categories{
-                nodes{
-                  taxonomyName
-                  termTaxonomyId
-                  name
-                  description
-                 }
-              }
+                categories {
+                  nodes {
+                    taxonomyName
+                    termTaxonomyId
+                    name
+                    description
+                  }
+                }
                 featuredImage {
                   node {
                     altText
@@ -227,38 +209,27 @@ export default function DoctorsPage({ doctorsPageData, doctorComponentData }) {
                 }
               }
             }
-      }
-          `,
-      }),
-      next: { revalidate: 10 },
-    },
-      {
-        cache: 'force-cache',
-        cache: 'no-store'
-      }
-    );
+          }`,
+        }),
+      });
   
-    const doctorComponentData = await doctorData.json();
-    
-  // -------------------------------------------------------------
+      const doctorComponentData = await doctorDataResponse.json();
   
       // Pass fetched data as props to the page component
       return {
         props: {
           doctorsPageData,
-          doctorComponentData
+          doctorComponentData,
         },
+        revalidate: 10, // Revalidate every 10 seconds
       };
     } catch (error) {
       console.error('Error fetching data:', error);
   
-      // If an error occurs during data fetching, you can handle it here
-      // For example, you might want to redirect to an error page
+      // Handle errors by returning a fallback or empty data if needed
       return {
-        redirect: {
-          destination: '/error',
-          permanent: false,
-        },
+        notFound: true, // Display a 404 page if an error occurs
       };
     }
   }
+  

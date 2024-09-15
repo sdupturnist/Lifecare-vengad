@@ -86,25 +86,22 @@ export default function Blogs({ blogPageData, pageComponentData }) {
   );
 }
 
-export async function getServerSideProps(context) {
-  // Fetch data from an external API, database, or any other source
+export async function getStaticProps() {
   try {
-
-    //BLOG PAGE DATA
-    const blogData = await fetch(
-      wordpressGraphQlApiUrl, {
+    // BLOG PAGE DATA
+    const blogDataResponse = await fetch(wordpressGraphQlApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        query: ` query Posts {
+        query: `query Posts {
           posts(first: 5) {
             nodes {
-                databaseId
+              databaseId
               title
-               date
-               slug
+              date
+              slug
               featuredImage {
                 node {
                   altText
@@ -113,28 +110,20 @@ export async function getServerSideProps(context) {
               }
             }
           }
-        }
-          `,
+        }`,
       }),
-      next: { revalidate: 10 },
-    },
-      {
-        cache: 'force-cache',
-        cache: 'no-store'
-      }
-    );
+    });
 
-    const blogPageData = await blogData.json();
+    const blogPageData = await blogDataResponse.json();
 
-    //PAGE DATA
-    const pageData = await fetch(
-      wordpressGraphQlApiUrl, {
+    // PAGE DATA
+    const pageDataResponse = await fetch(wordpressGraphQlApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        query: ` query Posts {
+        query: `query Posts {
           pages(where: {id: 1179}) {
             nodes {
               title
@@ -145,7 +134,7 @@ export async function getServerSideProps(context) {
                 }
               }
               seo {
-              canonical
+                canonical
                 metaDesc
                 metaKeywords
                 title
@@ -168,22 +157,11 @@ export async function getServerSideProps(context) {
               }
             }
           }
-    }
-          `,
+        }`,
       }),
-      next: { revalidate: 10 },
-    },
-      {
-        cache: 'force-cache',
-        cache: 'no-store'
-      }
-    );
+    });
 
-    const pageComponentData = await pageData.json();
-
-
-
-    // -------------------------------------------------------------
+    const pageComponentData = await pageDataResponse.json();
 
     // Pass fetched data as props to the page component
     return {
@@ -191,19 +169,17 @@ export async function getServerSideProps(context) {
         blogPageData,
         pageComponentData,
       },
+      revalidate: 10, // Revalidate every 10 seconds
     };
   } catch (error) {
     console.error('Error fetching data:', error);
 
-    // If an error occurs during data fetching, you can handle it here
-    // For example, you might want to redirect to an error page
+    // Handle errors by returning fallback or empty data
     return {
-      redirect: {
-        destination: '/error',
-        permanent: false,
-      },
+      notFound: true, // Show a 404 page if an error occurs
     };
   }
 }
+
 
 

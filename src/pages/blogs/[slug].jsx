@@ -5,18 +5,9 @@ import Images from "@/components/Images";
 import AOSInit from "@/components/Aos";
 import Metatags from "@/components/Seo";
 
-import { useRouter } from 'next/router';
-
-
-
-
 export default function BlogSingle({ blogPageData, pageComponentData }) {
 
-    console.log(blogPageData.data.posts.nodes[0])
-
-
     function formatBlogDate(params) {
-
         let formattedDate = new Date(params).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -24,22 +15,16 @@ export default function BlogSingle({ blogPageData, pageComponentData }) {
             hour: "2-digit",
             minute: "2-digit",
             hour12: false
+        });
 
-        })
-
-        return formattedDate
-
+        return formattedDate;
     }
 
-    //console.log(pageComponentData.data.pages.nodes[0])
-
-    // Render your page content using the data
     return (
         <>
             <Metatags data={pageComponentData} />
             <AOSInit />
             <Layout>
-
                 <section className="spacing-100">
                     <div className="container">
                         <div className="col-12">
@@ -65,224 +50,152 @@ export default function BlogSingle({ blogPageData, pageComponentData }) {
     );
 }
 
-export async function getServerSideProps(context) {
-
-    const { params } = context;
-
-    const { slug } = params
-
-
-    // Fetch data from an external API, database, or any other source
+export async function getStaticPaths() {
     try {
-
-        //BLOG PAGE DATA
-        const blogData = await fetch(
-            wordpressGraphQlApiUrl, {
+        // Fetch a list of slugs or IDs from your API or data source
+        const response = await fetch(wordpressGraphQlApiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                query: ` query Posts {
-            posts(where: {name: "`+ slug + `"}) {
-           nodes {
-             title
-             content
-             date
-             
-             featuredImage {
-               node {
-                 altText
-                 sourceUrl
-               }
-               
-             }
-             seo {
-               canonical
-               metaDesc
-               metaKeywords
-               title
-               opengraphDescription
-               opengraphSiteName
-               opengraphUrl
-               opengraphImage {
-                 altText
-                 link
-                 sourceUrl
-               }
-               opengraphType
-               opengraphTitle
-               opengraphModifiedTime
-               twitterDescription
-               twitterTitle
-               twitterImage {
-                 sourceUrl
-               }
-             }
-           }
-         }
-       }
-          `,
+                query: `query {
+                    posts {
+                        nodes {
+                            slug
+                        }
+                    }
+                }`,
+            }),
+        });
+
+        const { data } = await response.json();
+        const paths = data.posts.nodes.map(post => ({
+            params: { slug: post.slug }
+        }));
+
+        return { paths, fallback: 'blocking' };
+    } catch (error) {
+        console.error('Error fetching paths:', error);
+        return { paths: [], fallback: 'blocking' };
+    }
+}
+
+export async function getStaticProps(context) {
+    const { slug } = context.params;
+
+    try {
+        // Fetch BLOG PAGE DATA
+        const blogData = await fetch(wordpressGraphQlApiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                query: `query Posts {
+                    posts(where: {name: "` + slug + `"}) {
+                        nodes {
+                            title
+                            content
+                            date
+                            featuredImage {
+                                node {
+                                    altText
+                                    sourceUrl
+                                }
+                            }
+                            seo {
+                                canonical
+                                metaDesc
+                                metaKeywords
+                                title
+                                opengraphDescription
+                                opengraphSiteName
+                                opengraphUrl
+                                opengraphImage {
+                                    altText
+                                    link
+                                    sourceUrl
+                                }
+                                opengraphType
+                                opengraphTitle
+                                opengraphModifiedTime
+                                twitterDescription
+                                twitterTitle
+                                twitterImage {
+                                    sourceUrl
+                                }
+                            }
+                        }
+                    }
+                }`,
             }),
             next: { revalidate: 10 },
-        },
-            {
-                cache: 'force-cache',
-                cache: 'no-store'
-            }
-        );
+        });
 
         const blogPageData = await blogData.json();
 
-        // -------------------------------------------------------------
-
-        //HOME FOOTER DATA
-        const footerData = await fetch(
-            wordpressGraphQlApiUrl, {
+        // Fetch PAGE DATA
+        const pageData = await fetch(wordpressGraphQlApiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                query: ` query Posts {
-          allContactInfos {
-            edges {
-              node {
-                content
-                contactInfoAcf {
-                  address
-                  email
-                  facebook
-                  fieldGroupName
-                  instagram
-                  phone
-                }
-              }
-            }
-          }
-    }
-          `,
+                query: `query Posts {
+                    pages(where: {id: 1179}) {
+                        nodes {
+                            title
+                            featuredImage {
+                                node {
+                                    altText
+                                    sourceUrl
+                                }
+                            }
+                            seo {
+                                canonical
+                                metaDesc
+                                metaKeywords
+                                title
+                                opengraphDescription
+                                opengraphSiteName
+                                opengraphUrl
+                                opengraphImage {
+                                    altText
+                                    link
+                                    sourceUrl
+                                }
+                                opengraphType
+                                opengraphTitle
+                                opengraphModifiedTime
+                                twitterDescription
+                                twitterTitle
+                                twitterImage {
+                                    sourceUrl
+                                }
+                            }
+                        }
+                    }
+                }`,
             }),
             next: { revalidate: 10 },
-        },
-            {
-                cache: 'force-cache',
-                cache: 'no-store'
-            }
-        );
-
-        const footerComponentData = await footerData.json();
-
-        // -------------------------------------------------------------
-
-        //HOME HEADER DATA
-        const headerData = await fetch(
-            wordpressGraphQlApiUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                query: ` query Posts {
-          mediaItems(where: {name: "site-logo"}) {
-            nodes {
-              altText
-              sourceUrl
-            }
-          }
-        }
-          `,
-            }),
-            next: { revalidate: 10 },
-        },
-            {
-                cache: 'force-cache',
-                cache: 'no-store'
-            }
-        );
-
-        const headerComponentData = await headerData.json();
-
-        // -------------------------------------------------------------
-
-        //PAGE DATA
-        const pageData = await fetch(
-            wordpressGraphQlApiUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                query: ` query Posts {
-          pages(where: {id: 1179}) {
-            nodes {
-              title
-              featuredImage {
-                node {
-                  altText
-                  sourceUrl
-                }
-              }
-              seo {
-              canonical
-                metaDesc
-                metaKeywords
-                title
-                opengraphDescription
-                opengraphSiteName
-                opengraphUrl
-                opengraphImage {
-                  altText
-                  link
-                  sourceUrl
-                }
-                opengraphType
-                opengraphTitle
-                opengraphModifiedTime
-                twitterDescription
-                twitterTitle
-                twitterImage {
-                  sourceUrl
-                }
-              }
-            }
-          }
-    }
-          `,
-            }),
-            next: { revalidate: 10 },
-        },
-            {
-                cache: 'force-cache',
-                cache: 'no-store'
-            }
-        );
+        });
 
         const pageComponentData = await pageData.json();
 
-
-
-        // -------------------------------------------------------------
-
-        // Pass fetched data as props to the page component
         return {
             props: {
                 blogPageData,
                 pageComponentData,
             },
+            revalidate: 10, // Time in seconds to revalidate
         };
     } catch (error) {
         console.error('Error fetching data:', error);
 
-        // If an error occurs during data fetching, you can handle it here
-        // For example, you might want to redirect to an error page
+        // Handle error during data fetching
         return {
-            redirect: {
-                destination: '/error',
-                permanent: false,
-            },
+            notFound: true, // Optionally show a 404 page
         };
     }
 }
-
-
