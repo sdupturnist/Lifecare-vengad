@@ -127,156 +127,132 @@ export default function SepecialitiesPage({ specialtiesPageData, departmentCompo
     );
 }
 
-export async function getServerSideProps(context) {
+export async function getStaticProps() {
     try {
-
-        //PAGE DATA
-        const pageData = await fetch(
-            wordpressGraphQlApiUrl, {
+        // PAGE DATA
+        const pageDataResponse = await fetch(wordpressGraphQlApiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                query: `query Posts {
-            pages(where: {id: 46}) {
-              nodes {
-                title
-                featuredImage {
-                  node {
-                    altText
-                    sourceUrl
-                  }
-                }
-                pageACF {
-                  about
-                  sectionDescription
-                  sectionHeading
-                  subHeading
-                ctaBannerHeading
-                ctaBannerDescription
-                ctaButtonLabel
-                ctaButtonUrl
-                }
-                specialitiesACF{
-                  bottomBannerHeading
-                  bottomBannerDescription
-                  bottomBannerBackground{
-                    node{
-                      altText
-                      sourceUrl
+                query: `
+                    query Posts {
+                        pages(where: {id: 46}) {
+                            nodes {
+                                title
+                                featuredImage {
+                                    node {
+                                        altText
+                                        sourceUrl
+                                    }
+                                }
+                                pageACF {
+                                    about
+                                    sectionDescription
+                                    sectionHeading
+                                    subHeading
+                                    ctaBannerHeading
+                                    ctaBannerDescription
+                                    ctaButtonLabel
+                                    ctaButtonUrl
+                                }
+                                specialitiesACF {
+                                    bottomBannerHeading
+                                    bottomBannerDescription
+                                    bottomBannerBackground {
+                                        node {
+                                            altText
+                                            sourceUrl
+                                        }
+                                    }
+                                }
+                                seo {
+                                    canonical
+                                    metaDesc
+                                    metaKeywords
+                                    title
+                                    opengraphDescription
+                                    opengraphSiteName
+                                    opengraphUrl
+                                    opengraphImage {
+                                        altText
+                                        link
+                                        sourceUrl
+                                    }
+                                    opengraphType
+                                    opengraphTitle
+                                    opengraphModifiedTime
+                                    twitterDescription
+                                    twitterTitle
+                                    twitterImage {
+                                        sourceUrl
+                                    }
+                                }
+                            }
+                        }
                     }
-                  }
-                }
-                seo {
-                  canonical
-                  metaDesc
-                  metaKeywords
-                  title
-                  opengraphDescription
-                  opengraphSiteName
-                  opengraphUrl
-                  opengraphImage {
-                    altText
-                    link
-                    sourceUrl
-                  }
-                  opengraphType
-                  opengraphTitle
-                  opengraphModifiedTime
-                  twitterDescription
-                  twitterTitle
-                  twitterImage {
-                    sourceUrl
-                  }
-                }
-              }
-            }
-          }
-            `,
+                `,
             }),
-            next: { revalidate: 10 },
-        },
-            {
-                cache: 'force-cache',
-                cache: 'no-store'
-            }
-        );
+        });
 
-        const specialtiesPageData = await pageData.json();
+        const specialtiesPageData = await pageDataResponse.json();
 
-
-
-        //DEPARTMENT DATA
-        const departmentData = await fetch(
-            wordpressGraphQlApiUrl, {
+        // DEPARTMENT DATA
+        const departmentDataResponse = await fetch(wordpressGraphQlApiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                query: `query Posts {
-            allDepartments {
-              nodes {
-                content
-                title
-                featuredImage {
-                  node {
-                    altText
-                    sourceUrl
-                  }
-                }
-              }
-            }
-      }
-            `,
+                query: `
+                    query Posts {
+                        allDepartments {
+                            nodes {
+                                content
+                                title
+                                featuredImage {
+                                    node {
+                                        altText
+                                        sourceUrl
+                                    }
+                                }
+                            }
+                        }
+                    }
+                `,
             }),
-            next: { revalidate: 10 },
-        },
-            {
-                cache: 'force-cache',
-                cache: 'no-store'
-            }
-        );
+        });
 
-        const departmentComponentData = await departmentData.json();
+        const departmentComponentData = await departmentDataResponse.json();
 
-
-        //SERVICES DATA
-        const fecilitiesData = await fetch(
-            wordpressGraphQlApiUrl, {
+        // SERVICES DATA
+        const fecilitiesDataResponse = await fetch(wordpressGraphQlApiUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                query: `query Posts {
-            allFecilities {
-              nodes {
-                content
-                title
-                featuredImage {
-                  node {
-                    altText
-                    sourceUrl
-                  }
-                }
-              }
-            }
-      }
-            `,
+                query: `
+                    query Posts {
+                        allFecilities {
+                            nodes {
+                                content
+                                title
+                                featuredImage {
+                                    node {
+                                        altText
+                                        sourceUrl
+                                    }
+                                }
+                            }
+                        }
+                    }
+                `,
             }),
-            next: { revalidate: 10 },
-        },
-            {
-                cache: 'force-cache',
-                cache: 'no-store'
-            }
-        );
+        });
 
-        const fecilitiesComponentData = await fecilitiesData.json();
-
-
+        const fecilitiesComponentData = await fecilitiesDataResponse.json();
 
         return {
             props: {
@@ -284,15 +260,19 @@ export async function getServerSideProps(context) {
                 departmentComponentData,
                 fecilitiesComponentData
             },
+            revalidate: 10, // Regenerate the page at most every 10 seconds
         };
     } catch (error) {
         console.error('Error fetching data:', error);
 
+        // Handle error and return fallback props or redirect if necessary
         return {
-            redirect: {
-                destination: '/error',
-                permanent: false,
+            props: {
+                specialtiesPageData: null,
+                departmentComponentData: null,
+                fecilitiesComponentData: null,
             },
+            revalidate: 10, // Optional: still regenerate the page even if there's an error
         };
     }
 }

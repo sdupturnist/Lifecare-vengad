@@ -9,7 +9,7 @@ import RoundAnimation from "@/components/RoundAnimation";
 
 export default function Appoinment({ contactPageData, contactComponentData }) {
 
-  console.log(contactComponentData.data.allContactInfos.edges[0].node.contactInfoAcf)
+
 
     
     // Render your page content using the data
@@ -69,98 +69,108 @@ export default function Appoinment({ contactPageData, contactComponentData }) {
   
   export async function getStaticProps() {
     try {
-      // HOME PAGE DATA
+      // Fetch HOME PAGE DATA
       const pageDataResponse = await fetch(wordpressGraphQlApiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: `query Posts {
-            pages(where: {id: 1110}) {
-              nodes {
-                title
-                featuredImage {
-                  node {
-                    altText
-                    sourceUrl
-                  }
-                }
-                seo {
-                  canonical
-                  metaDesc
-                  metaKeywords
+          query: `
+            query Posts {
+              pages(where: {id: 1110}) {
+                nodes {
                   title
-                  opengraphDescription
-                  opengraphSiteName
-                  opengraphUrl
-                  opengraphImage {
-                    altText
-                    link
-                    sourceUrl
+                  featuredImage {
+                    node {
+                      altText
+                      sourceUrl
+                    }
                   }
-                  opengraphType
-                  opengraphTitle
-                  opengraphModifiedTime
-                  twitterDescription
-                  twitterTitle
-                  twitterImage {
-                    sourceUrl
+                  seo {
+                    canonical
+                    metaDesc
+                    metaKeywords
+                    title
+                    opengraphDescription
+                    opengraphSiteName
+                    opengraphUrl
+                    opengraphImage {
+                      altText
+                      link
+                      sourceUrl
+                    }
+                    opengraphType
+                    opengraphTitle
+                    opengraphModifiedTime
+                    twitterDescription
+                    twitterTitle
+                    twitterImage {
+                      sourceUrl
+                    }
                   }
                 }
               }
             }
-          }`,
+          `,
         }),
+        next: { revalidate: 10 },
       });
-  
+      
       const contactPageData = await pageDataResponse.json();
-  
-      // DOCTORS DATA
+      
+      // Fetch DOCTORS DATA
       const contactDataResponse = await fetch(wordpressGraphQlApiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: `query Posts {
-            allContactInfos {
-              edges {
-                node {
-                  content
-                  contactInfoAcf {
-                    address
-                    email
-                    facebook
-                    instagram
-                    phone
-                    appointmentPageTopBoxDescription
-                    contactFormDescription
-                    contactFormHeading
+          query: `
+            query Posts {
+              allContactInfos {
+                edges {
+                  node {
+                    content
+                    contactInfoAcf {
+                      address
+                      email
+                      facebook
+                      instagram
+                      phone
+                      apponmentPageTopBoxDescription
+                      contactFormDescription
+                      contactFormHeading
+                    }
                   }
                 }
               }
             }
-          }`,
+          `,
         }),
+        next: { revalidate: 10 },
       });
   
       const contactComponentData = await contactDataResponse.json();
-  
+      
       // Pass fetched data as props to the page component
       return {
         props: {
           contactPageData,
           contactComponentData,
         },
-        revalidate: 10, // Revalidate the static page every 10 seconds
+        revalidate: 10, // Regenerate the page at most every 10 seconds
       };
     } catch (error) {
       console.error('Error fetching data:', error);
-  
-      // Handle errors by returning fallback or empty data
+      
+      // Return empty props or handle the error as needed
       return {
-        notFound: true, // Show a 404 page if there is an error
+        props: {
+          contactPageData: null,
+          contactComponentData: null,
+        },
+        revalidate: 10, // Optional: still regenerate the page even if there's an error
       };
     }
   }
